@@ -1,0 +1,354 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<meta charset="utf-8" />
+		<meta name="viewport" content="width=device-width, user-scalable=0,minimum-scale=1.0, maximum-scale=1.0"/>
+		<title>Plataforma</title>
+		<script src="Sprite.js"></script>
+		<script src="SoundLib.js"></script>
+	</head>
+	<body>
+		<h1>Plataforma</h1>
+		<canvas width="600" height="300">
+			Seu navegador nao tem suporte ao canvas!
+		</canvas>
+
+<script>
+	var tela = document.getElementsByTagName("canvas")[0];
+	var ctx = tela.getContext("2d");
+	var mapa = [];
+	var movel = false;
+	mapa.img = new Image();
+	mapa.img.src = "platformer_32_mini.png";
+	for (var l = 0; l < 10; l++) {
+		mapa[l] = [];
+		for (var c = 0; c < 20; c++){
+			mapa[l][c] = 0;
+			if(l==9 || c == 0 || c == 19) mapa[l][c] = 1;
+			if(Math.random()<0.10){
+				mapa[l][c] = 1;
+			}
+		}
+	}
+
+	var soundlib = new SoundLib();
+	
+	//pcJump.load();
+
+
+	configuraTela();
+	var fps = 60;
+	var g = 60;
+	var dt = 1/fps;
+
+	var pc = new Sprite();
+	pc.f = 1; pc.p = 1;
+	pc.img = new Image()
+	pc.img.src="Old hero.png";
+
+	var boom = new Sprite();
+	boom.x = -100;
+	boom.img = new Image();
+	boom.img.src = "explosion17.png"
+
+	var inimigo = new Sprite();
+	inimigo.x = 30*18;
+	inimigo.img = new Image()
+	inimigo.img.src="Old enemies.png";
+	inimigo.f = 1;
+	inimigo.p = 1;
+	var bonus = new Sprite();
+	bonus.img = new Image()
+	bonus.img.src="Old enemies.png";
+	bonus.f = 1;
+	bonus.p = 7;
+	bonus.x = 30*15;
+
+	pc.controlar = function(){
+		if(this.direita){
+			this.ax = -150;
+		}else if(this.esquerda){
+			this.ax =  150;
+		}else{
+			this.ax = 0;
+		}
+		if(this.pulando && this.vy == 0){
+			this.vy = -2*g;
+			this.pulando = false;
+			soundlib.play("pulo");
+		}
+	};
+
+	inimigo.controlar = function () {
+		if(this.x>pc.x){
+			this.ax = -100;
+		}else if(this.x<pc.x){
+			this.ax = 100;
+		}
+		if(this.y>pc.y && this.vy == 0){
+			this.vy -= 2*g;
+		}
+			
+	}
+	bonus.controlar = function () {
+		if(this.x>pc.x){
+			this.ax = 100;
+		}else if(this.x<pc.x){
+			this.ax = -100;
+		}
+		if(this.y==pc.y && this.vy == 0){
+			this.vy -= 2*g;
+		}
+			
+	}
+		
+	addEventListener("keydown", function(e){
+		e.preventDefault();
+		if(e.keyCode==37){
+			pc.direita = true;
+		}
+		if(e.keyCode==39){
+			pc.esquerda = true;
+		}
+		if(e.keyCode==38){
+			pc.pulando = true;
+		}
+
+	});
+	addEventListener("keyup", function(e){
+		e.preventDefault();
+		if(e.keyCode==37){
+			pc.direita = false;
+		}
+		if(e.keyCode==39){
+			pc.esquerda = false;
+		}
+		if(e.keyCode==38){
+			pc.pulando = false;
+		}
+		
+	});
+
+	setInterval(passo, 1000/fps);
+	function passo(){
+
+		ctx.fillStyle = "black";
+		ctx.fillRect(0,0, tela.width, tela.height);	
+		desenharMapa();
+		pc.controlar();
+		inimigo.controlar();
+		bonus.controlar();
+		inimigo.moverCartGrid(dt,200, mapa);
+		pc.moverCartGrid(dt,200, mapa);
+		bonus.moverCartGrid(dt,200, mapa);
+
+		pc.desenhar(ctx);
+		inimigo.desenhar(ctx);
+		bonus.desenhar(ctx);
+
+		if(pc.colidiuCom(inimigo)){
+			pc.vy = 0;
+			pc.vx = 0;
+			soundlib.play("boom", 500);
+			boom.s = 0;
+			boom.x = pc.x;
+			boom.y = pc.y;
+			pc.x = 30*1;
+			pc.y = 30*1;
+			inimigo.x = 30*(Math.random()*5+14);
+			inimigo.y = 0;
+		}
+		if(pc.colidiuCom(bonus)){
+			bonus.x = 30*Math.random()*20+1;
+			bonus.y = 30*1;
+			bonus.vy = 0;
+			bonus.vx = 0;
+		}
+
+		if(movel) desenhaBotoes(ctx);
+
+		boom.desenhar(ctx);
+	}
+
+	function desenharMapa(){
+
+		for (var l = 0; l < 10; l++) {
+			for (var c = 0; c < 20; c++){
+				if(mapa[l][c]==1){
+					
+			ctx.drawImage(mapa.img, 2*32,0*32, 32, 32,
+					c*30, l*30-22, 30, 30);
+				}
+				//ctx.strokeStyle = "white";
+			//	ctx.strokeRect(c*30, l*30, 30, 30);
+			}
+		}	
+	}
+	//addEventListener("mousedown", clique);
+	function clique(e){
+		console.dir(e);
+		var gcx = Math.floor(e.offsetX/30);
+		var gcy = Math.floor(e.offsetY/30);
+		mapa[gcy][gcx] = !mapa[gcy][gcx];
+	}
+
+	pc.desenhar = function(ctx){
+					ctx.save();
+					ctx.translate(this.x, this.y);
+					ctx.rotate(this.angulo+Math.PI/2);
+
+					if(Math.abs(pc.vx) < 2){
+						pc.vx = 0;
+						ctx.scale(2,2);
+						pc.p=1;
+					}else if(pc.vx > 0){
+						pc.p=2;
+						ctx.scale(2,2);
+					}else {
+						pc.p=2;
+						ctx.scale(-2,2);
+					}
+					pc.f+=8*dt
+					
+					
+					switch(pc.p){
+						case 1: if(pc.f>=5) pc.f = 1;
+						break;
+						case 2: if(pc.f>=7) pc.f = 1;
+						break;
+					}
+					if(pc.vy<0){
+						pc.p = 3;
+						pc.f = 1;
+					}else if(pc.vy>0){
+						pc.p = 3;
+						pc.f = 2;
+					}
+					
+		ctx.drawImage(pc.img, Math.floor(pc.f)*16, pc.p*16, 16, 16,
+								-8, -8, 16, 16	);
+
+					ctx.restore();
+					//ctx.strokeStyle = "white";
+					//ctx.strokeRect(this.gx*30,this.gy*30, 30, 30);
+				};
+	inimigo.desenhar = function(ctx){
+					this.s = this.s||1;
+					ctx.save();
+					ctx.translate(this.x, this.y);
+					ctx.rotate(this.angulo+Math.PI/2);
+					if(this.vx > 0){
+						ctx.scale(-2,2);
+					}else {
+						ctx.scale(2,2);
+					}
+					this.f+=8*dt
+					if(this.f>5) this.f = 1;
+		ctx.drawImage(this.img, Math.floor(this.f)*16, this.p*16, 16, 16,
+								-8, -8, 16, 16	);
+
+					ctx.restore();
+					//ctx.strokeStyle = "white";
+					//ctx.strokeRect(this.gx*30,this.gy*30, 30, 30);
+				};
+	bonus.desenhar = inimigo.desenhar;
+	boom.desenhar = function(ctx){
+					boom.s = boom.s||0;
+					ctx.save();
+					ctx.translate(this.x, this.y);
+					ctx.rotate(this.angulo+Math.PI/2);
+					boom.s+=30*dt;
+					var l = Math.floor(boom.s) % 5;
+					var c = Math.floor(boom.s / 5 );
+					console.log(l,c,boom.s);
+					if(boom.s>25){
+						boom.s = 0;
+						boom.x = -100;
+						boom.y = -100;
+					}
+					ctx.drawImage(boom.img, l*64, c*64, 64, 64,
+								-32, -32, 64, 64	);
+
+					ctx.restore();
+					//ctx.strokeStyle = "white";
+					//ctx.strokeRect(this.gx*30,this.gy*30, 30, 30);
+	};
+
+
+	function configuraTela () {
+
+		var altura = window.innerHeight;
+		
+		document.body.style.height = 2*altura+"px";
+		window.scrollTo(0,0);
+		movel = ('ontouchstart' in window);
+		if(!movel) return;
+
+		altura = window.innerHeight;
+		largura = window.innerWidth;
+		tela.style.position = 'absolute';
+		tela.style.top = 0;
+		tela.style.left = 0;
+		var fs = Math.min(altura/tela.height, largura/tela.width);
+		tela.style.width = fs*tela.width+"px";
+		tela.style.height = fs*tela.height+"px";
+	}
+	tela.addEventListener('touchstart', verificaTouch);
+	tela.addEventListener('touchmove', verificaTouch);
+	tela.addEventListener('touchend', verificaTouch);
+	function verificaTouch(e){
+
+		e.preventDefault();
+		pc.direita = false;
+		pc.esquerda = false;
+		pc.pulando = false;
+
+		var tamx = Math.floor(tela.width/8);
+		var tamy = Math.floor(tela.height/8);
+		for (var i = e.targetTouches.length - 1; i >= 0; i--) {
+			var toque = e.targetTouches[i];
+			var posx = Math.floor((toque.pageX)/tamx);
+			var posy = Math.floor((toque.pageY)/tamy);
+			console.log(posy+":"+posx);
+			ctx.fillStyle = 'white';
+			ctx.fillRect(posx*tamx,posy*tamy, tamx,tamy)
+			if((posx==6 || posx==7 )&& posy==6){ pc.pulando= true; }
+				if(posx==6 && posy==7){ pc.direita= true; }
+				if(posx==7 && posy==7){ pc.esquerda= true; }
+		};
+		if(e.type == 'touchstart'||e.type=='touchend'){
+			for (var i = e.targetTouches.length - 1; i >= 0; i--) {
+				var toque = e.targetTouches[i];
+				var posx = Math.floor((toque.pageX)/tamx);
+				var posy = Math.floor((toque.pageY)/tamy);
+				console.log(posy+":"+posx);
+				if((posx==6 || posx==7 )&& posy==6){ pc.pulando= (e.type=='touchstart'); }
+				if(posx==6 && posy==7){ pc.direita= (e.type=='touchstart'); }
+				if(posx==7 && posy==7){ pc.esquerda= (e.type=='touchstart'); }
+				ctx.fillStyle = 'white';
+				ctx.fillRect(posx*tamx,posy*tamy, tamx,tamy)
+
+
+			};
+	}
+
+	}
+
+	function desenhaBotoes (ctx) {
+		var tamx = Math.floor(tela.width/8);
+		var tamy = Math.floor(tela.height/8);
+		ctx.fillStyle = "green";
+		ctx.strokeStyle = "white";
+		ctx.save();
+		ctx.globalAlpha= 0.5;
+		ctx.fillRect(6*tamx, 6*tamy, tamx*2, tamy);
+		ctx.strokeRect(6*tamx, 6*tamy, tamx*2, tamy);
+
+		ctx.fillRect(6*tamx, 7*tamy, tamx, tamy);
+		ctx.fillRect(7*tamx, 7*tamy, tamx, tamy);
+		ctx.strokeRect(6*tamx, 7*tamy, tamx, tamy);
+		ctx.strokeRect(7*tamx, 7*tamy, tamx, tamy);
+		ctx.restore();
+	}
+</script>
+</html>
