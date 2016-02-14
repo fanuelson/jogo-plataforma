@@ -45,6 +45,8 @@
 	pc.f = 1; pc.p = 1;
 	pc.img = new Image()
 	pc.img.src="Old hero.png";
+	pc.tiro = false;
+	pc.intervaloTiro = 0;
 
 	var boom = new Sprite();
 	boom.x = -100;
@@ -57,12 +59,21 @@
 	inimigo.img.src="Old enemies.png";
 	inimigo.f = 1;
 	inimigo.p = 1;
+
 	var bonus = new Sprite();
 	bonus.img = new Image()
 	bonus.img.src="Old enemies.png";
 	bonus.f = 1;
 	bonus.p = 7;
 	bonus.x = 30*15;
+
+	var tiro = new Sprite();
+	tiro.img = new Image();
+	tiro.img.src = "tiro.png";
+	tiro.vx = 100;
+	tiro.x = pc.x;
+
+	var tiros = [];
 
 	pc.controlar = function(){
 		if(this.direita){
@@ -101,6 +112,8 @@
 		}
 			
 	}
+
+	
 		
 	addEventListener("keydown", function(e){
 		e.preventDefault();
@@ -113,6 +126,10 @@
 		if(e.keyCode==38){
 			pc.pulando = true;
 		}
+		if(e.keyCode==32) {
+			pc.tiro = true;
+		}
+
 
 	});
 	addEventListener("keyup", function(e){
@@ -126,6 +143,9 @@
 		if(e.keyCode==38){
 			pc.pulando = false;
 		}
+		if(e.keyCode==32) {
+			pc.tiro = false;
+		}
 		
 	});
 
@@ -138,13 +158,105 @@
 		pc.controlar();
 		inimigo.controlar();
 		bonus.controlar();
+		//tiro.controlar();
+
 		inimigo.moverCartGrid(dt,200, mapa);
 		pc.moverCartGrid(dt,200, mapa);
 		bonus.moverCartGrid(dt,200, mapa);
+		//tiro.moverCartGrid(dt,200, mapa);
 
 		pc.desenhar(ctx);
+		//tiro.desenhar(ctx);
 		inimigo.desenhar(ctx);
 		bonus.desenhar(ctx);
+
+		if(pc.tiro && pc.intervaloTiro<=0){
+			var tiro = new Sprite();
+			tiro.img = new Image();
+			tiro.img.src = "tiro.png";
+			
+			tiro.x = pc.x;
+			tiro.y = pc.y;
+			
+			
+
+			if(pc.vx > 0) {
+					tiro.vx = 100;
+					tiro.ax = 100;
+					tiro.direita = true;
+					tiro.esquerda = false;
+				}else if(pc.vx < 0) {
+					tiro.vx = -100;
+					tiro.ax = -100;
+					tiro.direita = false;
+					tiro.esquerda = true;
+				} else {
+					tiro.vx = 100;
+					tiro.ax = 100;
+					tiro.direita = true;
+					tiro.esquerda = false;
+				}
+
+			
+			tiros.push(tiro);
+			
+			pc.intervaloTiro = 1/1; // 5 tiros por segundo
+		}
+		
+		
+		pc.intervaloTiro -= 1*dt;
+		tiros.forEach(function(t){
+			t.controlar = function () {
+				if(t.ax < 0) {
+					this.ax = 100;
+					this.direita = true;
+				}else if(t.ax > 0) {
+					this.ax = -100;
+					this.esquerda = true;
+				} else {
+					this.ax = 100;
+					this.direita = true;
+				}
+
+				if(this.vy == 0){
+					this.vy -= 2*g;
+				}
+				
+			};
+			t.desenhar = function(ctx){
+					
+						ctx.save();
+						ctx.translate(this.x, this.y);
+						ctx.rotate(this.angulo+Math.PI/2);
+						
+						
+						ctx.drawImage(this.img, 1, 1, 42, 42,
+									0, 0, 15, 15	);
+
+						ctx.restore();
+						
+			};
+
+			t.controlar();
+			t.moverCartGrid(dt,200, mapa);
+			t.desenhar(ctx);
+			if(t.y<10 || t.y > 440 || t.x<20 || t.x> 580){
+				tiros.splice(tiros.indexOf(t), 1);
+			}
+			if(t.colidiuCom(inimigo)){
+				inimigo.vy = 0;
+				inimigo.vx = 0;
+				soundlib.play("boom", 500);
+				boom.s = 0;
+				boom.x = inimigo.x;
+				boom.y = inimigo.y;
+				inimigo.x = 30*1;
+				inimigo.y = 30*1;
+
+			}
+             
+                            
+		});
 
 		if(pc.colidiuCom(inimigo)){
 			pc.vy = 0;
@@ -260,7 +372,7 @@
 					boom.s+=30*dt;
 					var l = Math.floor(boom.s) % 5;
 					var c = Math.floor(boom.s / 5 );
-					console.log(l,c,boom.s);
+					//console.log(l,c,boom.s);
 					if(boom.s>25){
 						boom.s = 0;
 						boom.x = -100;
@@ -272,6 +384,20 @@
 					ctx.restore();
 					//ctx.strokeStyle = "white";
 					//ctx.strokeRect(this.gx*30,this.gy*30, 30, 30);
+	};
+	tiro.desenhar = function(ctx){
+					
+				ctx.save();
+				ctx.translate(this.x, this.y);
+				ctx.rotate(this.angulo+Math.PI/2);
+				
+				
+				ctx.drawImage(tiro.img, 1, 1, 42, 42,
+							0, 0, 15, 15	);
+
+				ctx.restore();
+				//ctx.strokeStyle = "white";
+				//ctx.strokeRect(this.gx*30,this.gy*30, 30, 30);
 	};
 
 
@@ -350,5 +476,7 @@
 		ctx.strokeRect(7*tamx, 7*tamy, tamx, tamy);
 		ctx.restore();
 	}
+
+	
 </script>
 </html>
