@@ -25,7 +25,7 @@
 		for (var c = 0; c < 20; c++){
 			mapa[l][c] = 0;
 			if(l==9 || c == 0 || c == 19) mapa[l][c] = 1;
-			if(Math.random()<0.10){
+			if(Math.random()<0.30){
 				mapa[l][c] = 1;
 			}
 		}
@@ -59,6 +59,20 @@
 	inimigo.img.src="Old enemies.png";
 	inimigo.f = 1;
 	inimigo.p = 1;
+
+	var inimigo2 = new Sprite();
+	inimigo2.x = 30*16;
+	inimigo2.img = new Image()
+	inimigo2.img.src="Old enemies.png";
+	inimigo2.f = 1;
+	inimigo2.p = 3;
+
+	var inimigo3 = new Sprite();
+	inimigo3.x = 30*14;
+	inimigo3.img = new Image()
+	inimigo3.img.src="Old enemies.png";
+	inimigo3.f = 1;
+	inimigo3.p = 5;
 
 	var bonus = new Sprite();
 	bonus.img = new Image()
@@ -101,6 +115,30 @@
 		}
 			
 	}
+
+	inimigo2.controlar = function () {
+		if(this.x>pc.x){
+			this.ax = -110;
+		}else if(this.x<pc.x){
+			this.ax = 110;
+		}
+		if(this.y>pc.y && this.vy == 0){
+			this.vy -= 2*g;
+		}
+			
+	}
+	inimigo3.controlar = function () {
+		if(this.x>pc.x){
+			this.ax = -105;
+		}else if(this.x<pc.x){
+			this.ax = 105;
+		}
+		if(this.y>pc.y && this.vy == 0){
+			this.vy -= 2*g;
+		}
+			
+	}
+
 	bonus.controlar = function () {
 		if(this.x>pc.x){
 			this.ax = 100;
@@ -157,17 +195,23 @@
 		desenharMapa();
 		pc.controlar();
 		inimigo.controlar();
+		inimigo2.controlar();
+		inimigo3.controlar();
 		bonus.controlar();
 		//tiro.controlar();
 
 		inimigo.moverCartGrid(dt,200, mapa);
 		pc.moverCartGrid(dt,200, mapa);
+		inimigo2.moverCartGrid(dt,200, mapa);
+		inimigo3.moverCartGrid(dt,200, mapa);
 		bonus.moverCartGrid(dt,200, mapa);
 		//tiro.moverCartGrid(dt,200, mapa);
 
 		pc.desenhar(ctx);
 		//tiro.desenhar(ctx);
 		inimigo.desenhar(ctx);
+		inimigo2.desenhar(ctx);
+		inimigo3.desenhar(ctx);
 		bonus.desenhar(ctx);
 
 		if(pc.tiro && pc.intervaloTiro<=0){
@@ -181,17 +225,17 @@
 			
 
 			if(pc.vx > 0) {
-					tiro.vx = 100;
+					tiro.vx = 200;
 					tiro.ax = 100;
 					tiro.direita = true;
 					tiro.esquerda = false;
 				}else if(pc.vx < 0) {
-					tiro.vx = -100;
+					tiro.vx = -200;
 					tiro.ax = -100;
 					tiro.direita = false;
 					tiro.esquerda = true;
 				} else {
-					tiro.vx = 100;
+					tiro.vx = 200;
 					tiro.ax = 100;
 					tiro.direita = true;
 					tiro.esquerda = false;
@@ -200,7 +244,7 @@
 			
 			tiros.push(tiro);
 			
-			pc.intervaloTiro = 1/1; // 5 tiros por segundo
+			pc.intervaloTiro = 1/2; // 5 tiros por segundo
 		}
 		
 		
@@ -219,7 +263,7 @@
 				}
 
 				if(this.vy == 0){
-					this.vy -= 2*g;
+					this.vy -= 1*g;
 				}
 				
 			};
@@ -253,7 +297,28 @@
 				inimigo.x = 30*1;
 				inimigo.y = 30*1;
 				tiros.splice(tiros.indexOf(t), 1);
-
+			}
+			if(t.colidiuCom(inimigo2)){
+				inimigo2.vy = 0;
+				inimigo2.vx = 0;
+				soundlib.play("boom", 500);
+				boom.s = 0;
+				boom.x = inimigo.x;
+				boom.y = inimigo.y;
+				inimigo2.x = 30*15;
+				inimigo2.y = 30*1;
+				tiros.splice(tiros.indexOf(t), 1);
+			}
+			if(t.colidiuCom(inimigo3)){
+				inimigo3.vy = 0;
+				inimigo3.vx = 0;
+				soundlib.play("boom", 500);
+				boom.s = 0;
+				boom.x = inimigo.x;
+				boom.y = inimigo.y;
+				inimigo3.x = 30*10;
+				inimigo3.y = 30*1;
+				tiros.splice(tiros.indexOf(t), 1);
 			}
              
                             
@@ -270,6 +335,30 @@
 			pc.y = 30*1;
 			inimigo.x = 30*(Math.random()*5+14);
 			inimigo.y = 0;
+		}
+		if(pc.colidiuCom(inimigo2)){
+			pc.vy = 0;
+			pc.vx = 0;
+			soundlib.play("boom", 500);
+			boom.s = 0;
+			boom.x = pc.x;
+			boom.y = pc.y;
+			pc.x = 30*1;
+			pc.y = 30*1;
+			inimigo2.x = 30*(Math.random()*5+14);
+			inimigo2.y = 0;
+		}
+		if(pc.colidiuCom(inimigo3)){
+			pc.vy = 0;
+			pc.vx = 0;
+			soundlib.play("boom", 500);
+			boom.s = 0;
+			boom.x = pc.x;
+			boom.y = pc.y;
+			pc.x = 30*1;
+			pc.y = 30*1;
+			inimigo3.x = 30*(Math.random()*5+14);
+			inimigo3.y = 0;
 		}
 		if(pc.colidiuCom(bonus)){
 			bonus.x = 30*Math.random()*20+1;
@@ -357,13 +446,54 @@
 					}
 					this.f+=8*dt
 					if(this.f>5) this.f = 1;
-		ctx.drawImage(this.img, Math.floor(this.f)*16, this.p*16, 16, 16,
+					
+					ctx.drawImage(this.img, Math.floor(this.f)*16, this.p*16, 16, 16,
 								-8, -8, 16, 16	);
 
 					ctx.restore();
-					//ctx.strokeStyle = "white";
-					//ctx.strokeRect(this.gx*30,this.gy*30, 30, 30);
+					
 				};
+
+	inimigo2.desenhar = function(ctx){
+					this.s = this.s||1;
+					ctx.save();
+					ctx.translate(this.x, this.y);
+					ctx.rotate(this.angulo+Math.PI/2);
+					if(this.vx > 0){
+						ctx.scale(-2,2);
+					}else {
+						ctx.scale(2,2);
+					}
+					this.f+=8*dt
+					if(this.f>5) this.f = 1;
+					
+					ctx.drawImage(this.img, Math.floor(this.f)*16, this.p*16, 16, 16,
+								-8, -8, 16, 16	);
+
+					ctx.restore();
+					
+				};
+
+	inimigo3.desenhar = function(ctx){
+					this.s = this.s||1;
+					ctx.save();
+					ctx.translate(this.x, this.y);
+					ctx.rotate(this.angulo+Math.PI/2);
+					if(this.vx > 0){
+						ctx.scale(-2,2);
+					}else {
+						ctx.scale(2,2);
+					}
+					this.f+=8*dt
+					if(this.f>5) this.f = 1;
+					
+					ctx.drawImage(this.img, Math.floor(this.f)*16, this.p*16, 16, 16,
+								-8, -8, 16, 16	);
+
+					ctx.restore();
+					
+				};
+
 	bonus.desenhar = inimigo.desenhar;
 	boom.desenhar = function(ctx){
 					boom.s = boom.s||0;
