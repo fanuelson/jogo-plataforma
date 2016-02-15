@@ -9,7 +9,7 @@
 	</head>
 	<body>
 		<h1>Plataforma</h1>
-		<canvas width="600" height="300">
+		<canvas width="600" height="300" style="background-image:url('background_plataforma.png')">
 			Seu navegador nao tem suporte ao canvas!
 		</canvas>
 
@@ -32,9 +32,16 @@
 	}
 
 	var soundlib = new SoundLib();
+	var pontuacao = 0;
+	var pontosMatar = 5;
+	var poontosCapturarPassaro = 10;
+	var perdeu = false;
+	var ultimaPontuacao = 0;
+	var maiorPontuacao = 0;
 	
 	//pcJump.load();
-
+	var imagemFundo = new Image();
+	imagemFundo.src = "background_plataforma.png";
 
 	configuraTela();
 	var fps = 60;
@@ -167,6 +174,13 @@
 		if(e.keyCode==32) {
 			pc.tiro = true;
 		}
+		if(e.keyCode==13) {
+			if(pontuacao > maiorPontuacao) {
+				maiorPontuacao = pontuacao;
+			}
+			perdeu = false;
+			pontuacao = 0 ;
+		}
 
 
 	});
@@ -189,9 +203,18 @@
 
 	setInterval(passo, 1000/fps);
 	function passo(){
-
 		ctx.fillStyle = "black";
-		ctx.fillRect(0,0, tela.width, tela.height);	
+		ctx.drawImage(imagemFundo,0,10,600,300);	
+		
+		if(perdeu) {
+			
+        	ctx.fillStyle = "black";
+	        ctx.font ="bold 20px times";
+	        ctx.fillText("Pontuação: "+pontuacao,250,80);
+	        ctx.fillText("Aperte Enter para começar outro jogo...",150,100);
+	        
+        	return;
+        }
 		desenharMapa();
 		pc.controlar();
 		inimigo.controlar();
@@ -213,6 +236,16 @@
 		inimigo2.desenhar(ctx);
 		inimigo3.desenhar(ctx);
 		bonus.desenhar(ctx);
+
+		ctx.fillStyle = "black";
+        ctx.font ="bold 15px times";
+        ctx.fillText("Pontuação: "+pontuacao,30,20);
+
+        ctx.fillStyle = "black";
+        ctx.font ="bold 15px times";
+        ctx.fillText("Recorde: "+maiorPontuacao,490,20);
+
+
 
 		if(pc.tiro && pc.intervaloTiro<=0){
 			var tiro = new Sprite();
@@ -297,6 +330,7 @@
 				inimigo.x = 30*1;
 				inimigo.y = 30*1;
 				tiros.splice(tiros.indexOf(t), 1);
+				pontuacao += pontosMatar;
 			}
 			if(t.colidiuCom(inimigo2)){
 				inimigo2.vy = 0;
@@ -308,6 +342,7 @@
 				inimigo2.x = 30*15;
 				inimigo2.y = 30*1;
 				tiros.splice(tiros.indexOf(t), 1);
+				pontuacao += pontosMatar;
 			}
 			if(t.colidiuCom(inimigo3)){
 				inimigo3.vy = 0;
@@ -319,6 +354,7 @@
 				inimigo3.x = 30*10;
 				inimigo3.y = 30*1;
 				tiros.splice(tiros.indexOf(t), 1);
+				pontuacao += pontosMatar;
 			}
              
                             
@@ -335,6 +371,7 @@
 			pc.y = 30*1;
 			inimigo.x = 30*(Math.random()*5+14);
 			inimigo.y = 0;
+			perdeu = true;
 		}
 		if(pc.colidiuCom(inimigo2)){
 			pc.vy = 0;
@@ -347,6 +384,7 @@
 			pc.y = 30*1;
 			inimigo2.x = 30*(Math.random()*5+14);
 			inimigo2.y = 0;
+			perdeu = true;
 		}
 		if(pc.colidiuCom(inimigo3)){
 			pc.vy = 0;
@@ -359,12 +397,14 @@
 			pc.y = 30*1;
 			inimigo3.x = 30*(Math.random()*5+14);
 			inimigo3.y = 0;
+			perdeu = true;
 		}
 		if(pc.colidiuCom(bonus)){
 			bonus.x = 30*Math.random()*20+1;
 			bonus.y = 30*1;
 			bonus.vy = 0;
 			bonus.vx = 0;
+			pontuacao += poontosCapturarPassaro;
 		}
 
 		if(movel) desenhaBotoes(ctx);
@@ -376,10 +416,10 @@
 
 		for (var l = 0; l < 10; l++) {
 			for (var c = 0; c < 20; c++){
-				if(mapa[l][c]==1){
+				if(mapa[l][c]==1 && l!=9){
 					
-			ctx.drawImage(mapa.img, 2*32,0*32, 32, 32,
-					c*30, l*30-22, 30, 30);
+				ctx.drawImage(mapa.img, 2*32,0*32, 32, 32,
+						c*30, l*30-22, 30, 30);
 				}
 				//ctx.strokeStyle = "white";
 			//	ctx.strokeRect(c*30, l*30, 30, 30);
@@ -607,6 +647,9 @@
 		ctx.strokeRect(7*tamx, 7*tamy, tamx, tamy);
 		ctx.restore();
 	}
+
+				
+				
 
 	
 </script>
